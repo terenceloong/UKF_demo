@@ -24,16 +24,16 @@ for k=1:n
     %---------------------------------------------------------------------%
     Z = data(k);
     %--Predict--%
-    Psr = chol(P)';
-    ChiX = [X, X*ones(1,L)+gamma*Psr, X*ones(1,L)-gamma*Psr]; %sigma point
+    Psr = gamma*chol(P)';
+    ChiX = [X, X*ones(1,L)+Psr, X*ones(1,L)-Psr]; %sigma point
     for p=1:(2*L+1)
         ChiX(:,p) = fun_state(ChiX(:,p), t-dt, dt); %state equation
     end
     X = ChiX*Wm;
     P = (ChiX-X*ones(1,2*L+1))*Wc*(ChiX-X*ones(1,2*L+1))';
     %--Update--%
-    Psr = chol(P)';
-    ChiX = [X, X*ones(1,L)+gamma*Psr, X*ones(1,L)-gamma*Psr]; %sigma point
+    Psr = gamma*chol(P)';
+    ChiX = [X, X*ones(1,L)+Psr, X*ones(1,L)-Psr]; %sigma point
     ChiZ = [1,0]*ChiX; %measure equation
     Zm = ChiZ*Wm;
     Pxz = (ChiX- X*ones(1,2*L+1))*Wc*(ChiZ-Zm*ones(1,2*L+1))';

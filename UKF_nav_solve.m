@@ -44,8 +44,8 @@ for k=1:n
     %--Predict--%
     X = [X;zeros(Np,1)]; %augmentation
     P = [P,zeros(Nx,Np);zeros(Np,Nx),Q];
-    Psr = chol(P)';
-    ChiX = [X, X*ones(1,Lp)+gamma_p*Psr, X*ones(1,Lp)-gamma_p*Psr]; %sigma point
+    Psr = gamma_p*chol(P)';
+    ChiX = [X, X*ones(1,Lp)+Psr, X*ones(1,Lp)-Psr]; %sigma point
     for p=1:(2*Lp+1)
         ChiX(:,p) = fun_state(ChiX(:,p), [gyro0;gyro1;gyro2;acc0;acc1;acc2], dts); %state equation
     end
@@ -53,13 +53,13 @@ for k=1:n
     X = ChiX*Wmp;
     P = (ChiX-X*ones(1,2*Lp+1))*Wcp*(ChiX-X*ones(1,2*Lp+1))';
     %--Update--%
-    Psr = chol(P)';
-    ChiX = [X, X*ones(1,Lm)+gamma_m*Psr, X*ones(1,Lm)-gamma_m*Psr]; %sigma point
+    Psr = gamma_m*chol(P)';
+    ChiX = [X, X*ones(1,Lm)+Psr, X*ones(1,Lm)-Psr]; %sigma point
     for p=1:(2*Lm+1)
         ChiZ(:,p) = fun_measure(ChiX(:,p)); %measure equation
     end
     Zm = ChiZ*Wmm;
-    Pxz = (ChiX-X*ones(1,2*Lm+1))*Wcm*(ChiZ-Zm*ones(1,2*Lm+1))';
+    Pxz = (ChiX- X*ones(1,2*Lm+1))*Wcm*(ChiZ-Zm*ones(1,2*Lm+1))';
     Pzz = (ChiZ-Zm*ones(1,2*Lm+1))*Wcm*(ChiZ-Zm*ones(1,2*Lm+1))' + R;
     K = Pxz/Pzz;
     X = X + K*(Z-Zm);
