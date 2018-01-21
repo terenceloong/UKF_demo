@@ -11,6 +11,7 @@ filter = zeros(n,2);
 output_P = zeros(n,2);
 
 %-------------------------------------------------------------------------%
+H = [1,0];
 X = [0;0];
 P = diag([1,1]);
 R = sigma_z^2;
@@ -32,12 +33,18 @@ for k=1:n
     X = ChiX*Wm;
     P = (ChiX-X*ones(1,2*L+1))*Wc*(ChiX-X*ones(1,2*L+1))';
     %--Update--%
-    Psr = gamma*chol(P)';
-    ChiX = [X, X*ones(1,L)+Psr, X*ones(1,L)-Psr]; %sigma point
-    ChiZ = [1,0]*ChiX; %measure equation
-    Zm = ChiZ*Wm;
-    Pxz = (ChiX- X*ones(1,2*L+1))*Wc*(ChiZ-Zm*ones(1,2*L+1))';
-    Pzz = (ChiZ-Zm*ones(1,2*L+1))*Wc*(ChiZ-Zm*ones(1,2*L+1))' + R;
+    %----nonlinear measure equation
+%     Psr = gamma*chol(P)';
+%     ChiX = [X, X*ones(1,L)+Psr, X*ones(1,L)-Psr]; %sigma point
+%     ChiZ = H*ChiX; %measure equation
+%     Zm = ChiZ*Wm;
+%     Pxz = (ChiX- X*ones(1,2*L+1))*Wc*(ChiZ-Zm*ones(1,2*L+1))';
+%     Pzz = (ChiZ-Zm*ones(1,2*L+1))*Wc*(ChiZ-Zm*ones(1,2*L+1))' + R;
+    %----linear measure equation
+    Zm = H*X;
+    Pxz = P*H';
+    Pzz = H*P*H' + R;
+    
     K = Pxz/Pzz;
     X = X + K*(Z-Zm);
     P = P - K*Pzz*K';

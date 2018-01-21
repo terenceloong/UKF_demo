@@ -11,6 +11,9 @@ Nx = 9; %state variables
 Np = 9; %process noise
 Nm = 4; %measure noise
 
+H = zeros(Nm,Nx);
+H(1) = 1;
+H(2:4,4:6) = eye(3);
 X = zeros(Nx,1);
 P = diag([[1,1,1]*1, [1,1,1]*1, [1,1,1]*1e-4]);
 Q = diag([[1,1,1]*gyro_noise/dt, [1,1,1]*acc_noise/dt, [1,1,1]*3e-7]);
@@ -53,23 +56,29 @@ for k=1:n
     X = ChiX*Wmp;
     P = (ChiX-X*ones(1,2*Lp+1))*Wcp*(ChiX-X*ones(1,2*Lp+1))';
     %--Update--%
-    Psr = gamma_m*chol(P)';
-    ChiX = [X, X*ones(1,Lm)+Psr, X*ones(1,Lm)-Psr]; %sigma point
-    for p=1:(2*Lm+1)
-        ChiZ(:,p) = fun_measure(ChiX(:,p)); %measure equation
-    end
-    Zm = ChiZ*Wmm;
-    Pxz = (ChiX- X*ones(1,2*Lm+1))*Wcm*(ChiZ-Zm*ones(1,2*Lm+1))';
-    Pzz = (ChiZ-Zm*ones(1,2*Lm+1))*Wcm*(ChiZ-Zm*ones(1,2*Lm+1))' + R;
+    %----nonlinear measure equation
+%     Psr = gamma_m*chol(P)';
+%     ChiX = [X, X*ones(1,Lm)+Psr, X*ones(1,Lm)-Psr]; %sigma point
+%     for p=1:(2*Lm+1)
+%         ChiZ(:,p) = fun_measure(ChiX(:,p)); %measure equation
+%     end
+%     Zm = ChiZ*Wmm;
+%     Pxz = (ChiX- X*ones(1,2*Lm+1))*Wcm*(ChiZ-Zm*ones(1,2*Lm+1))';
+%     Pzz = (ChiZ-Zm*ones(1,2*Lm+1))*Wcm*(ChiZ-Zm*ones(1,2*Lm+1))' + R;
+    %----linear measure equation
+	Zm = H*X;
+    Pxz = P*H';
+    Pzz = H*P*H' + R;
+    
     K = Pxz/Pzz;
     X = X + K*(Z-Zm);
     P = P - K*Pzz*K';
     %---------------------------------------------------------------------%
-    output_P(k,:) = sqrt(diag(P))';
     
     nav(k,4:6) = X(4:6)';
     nav(k,7:9) = X(1:3)' /pi*180;
     filter(k,1:3) = X(7:9)' /pi*180;
+    output_P(k,:) = sqrt(diag(P))';
 end
 
 nav = [zeros(1,9); nav];
